@@ -1,0 +1,100 @@
+{\rtf1\ansi\ansicpg936\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red15\green112\blue1;\red255\green255\blue255;
+\red0\green0\blue255;\red19\green118\blue70;\red144\green1\blue18;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;\cssrgb\c0\c50196\c0;\cssrgb\c100000\c100000\c100000;
+\cssrgb\c0\c0\c100000;\cssrgb\c3529\c52549\c34510;\cssrgb\c63922\c8235\c8235;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs24 \cf0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 \
+\cf3 \cb4 \strokec3 -- SQL Script for Interest Rate Analysis\cf0 \cb1 \strokec2 \
+\cf3 \cb4 \strokec3 -- Author: Evelyn Li\cf0 \cb1 \strokec2 \
+\cf3 \cb4 \strokec3 -- This script creates tables and views to analyze FRBNY rates and Repo GC rates, \cf0 \cb1 \strokec2 \
+\cf3 \cb4 \strokec3 -- loading data from CSV files and creating a summary table with joined data.\cf0 \cb1 \strokec2 \
+\
+\
+\
+\cf3 \cb4 \strokec3 -- 1. Create FRBNY rates table\cf0 \cb1 \strokec2 \
+\cf3 \cb4 \strokec3 -- Setting a primary key on (`Effective Date`, `Rate Type`) to prevent duplicates\cf0 \cb1 \strokec2 \
+\cf3 \cb4 \strokec3 -- Defining the columns 'Effective Date' and 'Rate Type' with the NOT NULL constraint to prevent errors\cf0 \cb1 \strokec2 \
+\cf5 \cb4 \strokec5 CREATE\cf0 \strokec2  \cf5 \strokec5 TABLE\cf0 \strokec2  frbny_rates (\cb1 \
+\cb4     `Effective Date` \cf5 \strokec5 Date\cf0 \strokec2  \cf5 \strokec5 NOT\cf0 \strokec2  \cf5 \strokec5 NULL\cf0 \strokec2 ,\cb1 \
+\cb4     `Rate Type` \cf5 \strokec5 VARCHAR\cf0 \strokec2 (\cf6 \strokec6 10\cf0 \strokec2 ) \cf5 \strokec5 NOT\cf0 \strokec2  \cf5 \strokec5 NULL\cf0 \strokec2 ,\cb1 \
+\cb4     `Rate (%)` \cf5 \strokec5 FLOAT\cf0 \strokec2 ,\cb1 \
+\cb4     `1st Percentile (%)` \cf5 \strokec5 FLOAT\cf0 \strokec2 ,\cb1 \
+\cb4     `25th Percentile (%)` \cf5 \strokec5 FLOAT\cf0 \strokec2 ,\cb1 \
+\cb4     `75th Percentile (%)` \cf5 \strokec5 FLOAT\cf0 \strokec2 ,\cb1 \
+\cb4     `99th Percentile (%)` \cf5 \strokec5 FLOAT\cf0 \strokec2 ,\cb1 \
+\cb4     `Volume ($Billions)` \cf5 \strokec5 FLOAT\cf0 \strokec2 ,\cb1 \
+\cb4     `Target Rate From` \cf5 \strokec5 FLOAT\cf0 \strokec2 ,\cb1 \
+\cb4     `Target Rate To` \cf5 \strokec5 FLOAT\cf0 \strokec2 ,\cb1 \
+\cb4     \cf5 \strokec5 PRIMARY\cf0 \strokec2  \cf5 \strokec5 KEY\cf0 \strokec2  (`Effective Date`, `Rate Type`)\cb1 \
+\cb4 );\cb1 \
+\
+\
+\
+\cf3 \cb4 \strokec3 -- 2. Create Repo GC Rates table\cf0 \cb1 \strokec2 \
+\cf3 \cb4 \strokec3 -- Setting a primary key on (`Trade Date`) to prevent duplicates\cf0 \cb1 \strokec2 \
+\cf3 \cb4 \strokec3 -- Defining the column 'Trade Date' with the NOT NULL constraint to prevent errors\cf0 \cb1 \strokec2 \
+\cf5 \cb4 \strokec5 CREATE\cf0 \strokec2  \cf5 \strokec5 TABLE\cf0 \strokec2  repo_gc_rates (\cb1 \
+\cb4     `Trade Date` \cf5 \strokec5 DATE\cf0 \strokec2  \cf5 \strokec5 NOT\cf0 \strokec2  \cf5 \strokec5 NULL\cf0 \strokec2 ,\cb1 \
+\cb4     `General Collateral Rate` \cf5 \strokec5 FLOAT\cf0 \strokec2 ,\cb1 \
+\cb4     \cf5 \strokec5 PRIMARY\cf0 \strokec2  \cf5 \strokec5 KEY\cf0 \strokec2  (`Trade Date`)\cb1 \
+\cb4 );\cb1 \
+\
+\
+\
+\cf3 \cb4 \strokec3 -- 3. Load Data from CSV Files into the Tables\cf0 \cb1 \strokec2 \
+\cf3 \cb4 \strokec3 --      Before loading the data, Excel files were already converted to CSV file\
+--	   `Effective Date` and `Trade Date` columns are converted to DATE format using STR_TO_DATE function\cf0 \cb1 \strokec2 \
+\
+\cf5 \cb4 \strokec5 LOAD\cf0 \strokec2  \cf5 \strokec5 DATA\cf0 \strokec2  \cf5 \strokec5 LOCAL\cf0 \strokec2  \cf5 \strokec5 INFILE\cf0 \strokec2  \cf7 \strokec7 'FRBNY Rates.csv'\cf0 \cb1 \strokec2 \
+\cf5 \cb4 \strokec5 INTO\cf0 \strokec2  \cf5 \strokec5 TABLE\cf0 \strokec2  frbny_rates\cb1 \
+\cf5 \cb4 \strokec5 FIELDS\cf0 \strokec2  \cf5 \strokec5 TERMINATED\cf0 \strokec2  \cf5 \strokec5 BY\cf0 \strokec2  \cf7 \strokec7 ','\cf0 \strokec2  \cb1 \
+\cf5 \cb4 \strokec5 ENCLOSED\cf0 \strokec2  \cf5 \strokec5 BY\cf0 \strokec2  \cf7 \strokec7 '"'\cf0 \cb1 \strokec2 \
+\cf5 \cb4 \strokec5 LINES\cf0 \strokec2  \cf5 \strokec5 TERMINATED\cf0 \strokec2  \cf5 \strokec5 BY\cf0 \strokec2  \cf7 \strokec7 '\\n'\cf0 \cb1 \strokec2 \
+\cf5 \cb4 \strokec5 IGNORE\cf0 \strokec2  \cf6 \strokec6 1\cf0 \strokec2  \cf5 \strokec5 ROWS\cf0 \cb1 \strokec2 \
+\cb4 (@EffectiveDate, `Rate Type`, `Rate (%)`, `1st Percentile (%)`, \cb1 \
+\cb4  `25th Percentile (%)`, `75th Percentile (%)`, `99th Percentile (%)`,\cb1 \
+\cb4  `Volume ($Billions)`, `Target Rate From`, `Target Rate To`)\cb1 \
+\cf5 \cb4 \strokec5 SET\cf0 \strokec2  `Effective Date` = STR_TO_DATE(@EffectiveDate, \cf7 \strokec7 '%m/%d/%Y'\cf0 \strokec2 );\cb1 \
+\
+\cf5 \cb4 \strokec5 LOAD\cf0 \strokec2  \cf5 \strokec5 DATA\cf0 \strokec2  \cf5 \strokec5 LOCAL\cf0 \strokec2  \cf5 \strokec5 INFILE\cf0 \strokec2  \cf7 \strokec7 'Repo GC Rates.csv'\cf0 \cb1 \strokec2 \
+\cf5 \cb4 \strokec5 INTO\cf0 \strokec2  \cf5 \strokec5 TABLE\cf0 \strokec2  repo_gc_rates\cb1 \
+\cf5 \cb4 \strokec5 FIELDS\cf0 \strokec2  \cf5 \strokec5 TERMINATED\cf0 \strokec2  \cf5 \strokec5 BY\cf0 \strokec2  \cf7 \strokec7 ','\cf0 \strokec2  \cb1 \
+\cf5 \cb4 \strokec5 ENCLOSED\cf0 \strokec2  \cf5 \strokec5 BY\cf0 \strokec2  \cf7 \strokec7 '"'\cf0 \cb1 \strokec2 \
+\cf5 \cb4 \strokec5 LINES\cf0 \strokec2  \cf5 \strokec5 TERMINATED\cf0 \strokec2  \cf5 \strokec5 BY\cf0 \strokec2  \cf7 \strokec7 '\\n'\cf0 \cb1 \strokec2 \
+\cf5 \cb4 \strokec5 IGNORE\cf0 \strokec2  \cf6 \strokec6 1\cf0 \strokec2  \cf5 \strokec5 ROWS\cf0 \cb1 \strokec2 \
+\cb4 (@TradeDate, `General Collateral Rate`)\cb1 \
+\cf5 \cb4 \strokec5 SET\cf0 \strokec2  `Trade Date` = STR_TO_DATE(@TradeDate, \cf7 \strokec7 '%Y%m%d'\cf0 \strokec2 );\cb1 \
+\
+\
+\
+\cf3 \cb4 \strokec3 -- 4. Create EFFR and SOFR views for easier analysis\cf0 \cb1 \strokec2 \
+\cf5 \cb4 \strokec5 CREATE\cf0 \strokec2  \cf5 \strokec5 VIEW\cf0 \strokec2  effr \cf5 \strokec5 AS\cf0 \cb1 \strokec2 \
+\cf5 \cb4 \strokec5 SELECT\cf0 \strokec2  *\cb1 \
+\cf5 \cb4 \strokec5 FROM\cf0 \strokec2  frbny_rates\cb1 \
+\cf5 \cb4 \strokec5 WHERE\cf0 \strokec2  `Rate Type` = \cf7 \strokec7 'EFFR'\cf0 \strokec2 ;\cb1 \
+\
+\cf5 \cb4 \strokec5 CREATE\cf0 \strokec2  \cf5 \strokec5 VIEW\cf0 \strokec2  sofr \cf5 \strokec5 AS\cf0 \cb1 \strokec2 \
+\cf5 \cb4 \strokec5 SELECT\cf0 \strokec2  *\cb1 \
+\cf5 \cb4 \strokec5 FROM\cf0 \strokec2  frbny_rates\cb1 \
+\cf5 \cb4 \strokec5 WHERE\cf0 \strokec2  `Rate Type` =\cf7 \strokec7 'SOFR'\cf0 \strokec2 ;\cb1 \
+\
+\
+\
+\cf3 \cb4 \strokec3 -- 5. Create final rate table with joined data\cf0 \cb1 \strokec2 \
+\cf5 \cb4 \strokec5 CREATE\cf0 \strokec2  \cf5 \strokec5 TABLE\cf0 \strokec2  rate_table \cf5 \strokec5 AS\cf0 \cb1 \strokec2 \
+\cf5 \cb4 \strokec5 SELECT\cf0 \strokec2  \cb1 \
+\cb4     effr.`Effective Date` \cf5 \strokec5 AS\cf0 \strokec2  \cf5 \strokec5 Date\cf0 \strokec2 ,\cb1 \
+\cb4     effr.`Rate (%)` \cf5 \strokec5 AS\cf0 \strokec2  EFFR,\cb1 \
+\cb4     sofr.`Rate (%)` \cf5 \strokec5 AS\cf0 \strokec2  SOFR, \cb1 \
+\cb4     gcr.`General Collateral Rate` \cf5 \strokec5 AS\cf0 \strokec2  GCR\cb1 \
+\cf5 \cb4 \strokec5 FROM\cf0 \strokec2  effr\cb1 \
+\cf5 \cb4 \strokec5 INNER\cf0 \strokec2  \cf5 \strokec5 JOIN\cf0 \strokec2  sofr \cf5 \strokec5 ON\cf0 \strokec2  effr.`Effective Date` = sofr.`Effective Date`\cb1 \
+\cf5 \cb4 \strokec5 INNER\cf0 \strokec2  \cf5 \strokec5 JOIN\cf0 \strokec2  repo_gc_rates gcr \cf5 \strokec5 ON\cf0 \strokec2  effr.`Effective Date` = gcr.`Trade Date`\cb1 \
+\cf5 \cb4 \strokec5 ORDER\cf0 \strokec2  \cf5 \strokec5 BY\cf0 \strokec2  \cf5 \strokec5 Date\cf0 \strokec2  \cf5 \strokec5 ASC\cf0 \strokec2 ;\cb1 \
+}
